@@ -18,11 +18,11 @@ public class ExecutionResult {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "BIGSERIAL") // Spécifique à PostgreSQL
+    @Column(columnDefinition = "BIGSERIAL")
     private Long id;
 
     @Lob
-    @JdbcTypeCode(SqlTypes.LONGVARCHAR) // Optimisé pour PostgreSQL
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     @Column(name = "output", columnDefinition = "TEXT")
     private String output;
 
@@ -47,10 +47,10 @@ public class ExecutionResult {
     private ExecutionStatus status;
 
     public enum ExecutionStatus {
-        SUCCESS, FAILED, TIMEOUT, PENDING // Ajout d'un nouveau statut
+        SUCCESS, FAILED, TIMEOUT, PENDING
     }
 
-    // Version optimisée de la méthode utilitaire
+
     public boolean isSuccessful() {
         return ExecutionStatus.SUCCESS.equals(status);
     }

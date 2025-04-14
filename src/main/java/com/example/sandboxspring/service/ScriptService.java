@@ -26,7 +26,6 @@ public class ScriptService {
     }
 
     public Script createScript(Script script) {
-        // Assure que la date de création est bien définie
         script.setCreatedAt(LocalDateTime.now());
         return scriptRepository.save(script);
     }
@@ -38,7 +37,7 @@ public class ScriptService {
                     script.setContent(scriptDetails.getContent());
                     script.setType(scriptDetails.getType());
                     script.setCreatedBy(scriptDetails.getCreatedBy());
-                    // Ne pas modifier createdAt
+
                     return scriptRepository.save(script);
                 })
                 .orElseThrow(() -> new RuntimeException("Script not found with id " + id));
