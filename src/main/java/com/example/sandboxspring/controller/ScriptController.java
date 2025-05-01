@@ -28,7 +28,7 @@ public class ScriptController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/create")
+    @PostMapping
     public Script createScript(@RequestBody Script script) {
         return scriptService.createScript(script);
     }

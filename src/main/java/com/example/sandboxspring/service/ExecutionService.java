@@ -7,81 +7,79 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ExecutionService {
-    private final ExecutionResultRepository executionResultRepository;
 
-    @Autowired
-    private ThreadPoolTaskExecutor taskExecutor;
+    private final ExecutionResultRepository executionResultRepository;
+    private final ThreadPoolTaskExecutor taskExecutor;
 
     public ExecutionResult executeScript(Script script) {
-        log.info("Starting execution for script ID: {} (Type: {})", script.getId(), script.getType());
-
-        ExecutionResult result = ExecutionResult.builder()
-                .script(script)
-                .executedAt(LocalDateTime.now())
-                .status(ExecutionResult.ExecutionStatus.PENDING)
-                .build();
+        ExecutionResult result = buildInitialResult(script);
 
         try {
-            Future<String> future = taskExecutor.submit(() -> executeScriptContent(script));
-            String output = future.get(30, TimeUnit.SECONDS);
-
-            result.setOutput(output);
-            result.setStatus(ExecutionResult.ExecutionStatus.SUCCESS);
-            log.info("Execution succeeded for script ID: {}", script.getId());
-
+            String output = taskExecutor.submit(() -> executeScriptContent(script))
+                    .get(30, TimeUnit.SECONDS);
+            handleSuccess(result, output);
         } catch (TimeoutException e) {
-            result.setError("Execution timeout after 30 seconds");
-            result.setStatus(ExecutionResult.ExecutionStatus.TIMEOUT);
-            log.warn("Execution timeout for script ID: {}", script.getId());
-
+            handleTimeout(result);
         } catch (Exception e) {
-            result.setError(e.getClass().getSimpleName() + ": " + e.getMessage());
-            result.setStatus(ExecutionResult.ExecutionStatus.FAILED);
-            log.error("Execution failed for script ID: {} - Reason: {}",
-                    script.getId(), e.getMessage());
+            handleFailure(result, e);
         }
 
         return executionResultRepository.save(result);
     }
 
+    private ExecutionResult buildInitialResult(Script script) {
+        return ExecutionResult.builder()
+                .script(script)
+                .executedAt(LocalDateTime.now())
+                .status(ExecutionResult.ExecutionStatus.PENDING)
+                .build();
+    }
+
+    private void handleSuccess(ExecutionResult result, String output) {
+        result.setOutput(output);
+        result.setStatus(ExecutionResult.ExecutionStatus.SUCCESS);
+        log.info("Execution succeeded for script ID: {}", result.getScript().getId());
+    }
+
+    private void handleTimeout(ExecutionResult result) {
+        result.setError("Execution timeout after 30 seconds");
+        result.setStatus(ExecutionResult.ExecutionStatus.TIMEOUT);
+        log.warn("Execution timeout for script ID: {}", result.getScript().getId());
+    }
+
+    private void handleFailure(ExecutionResult result, Exception e) {
+        result.setError(e.getClass().getSimpleName() + ": " + e.getMessage());
+        result.setStatus(ExecutionResult.ExecutionStatus.FAILED);
+        log.error("Execution failed for script ID: {}", result.getScript().getId(), e);
+    }
+
     private String executeScriptContent(Script script) throws Exception {
-        switch (script.getType()) {
-            case PYTHON:
-                return executePythonScript(script.getContent());
-            case R:
-                return executeRScript(script.getContent());
-            case SQL:
-                return executeSQLScript(script.getContent());
-            default:
-                throw new IllegalArgumentException("Unsupported script type: " + script.getType());
-        }
+        return switch (script.getType()) {
+            case PYTHON -> executePythonScript(script.getContent());
+            case R -> executeRScript(script.getContent());
+            case SQL -> executeSQLScript(script.getContent());
+            default -> throw new IllegalArgumentException("Unsupported type: " + script.getType());
+        };
     }
 
-    private String executePythonScript(String content) throws Exception {
-        // Implémentation réelle à compléter
-        return "Python execution result:\n" + content.substring(0, Math.min(100, content.length()));
+    private String executePythonScript(String content) {
+        return "Python execution result:\n" + content;
     }
 
-    private String executeRScript(String content) throws Exception {
-        // Implémentation réelle à compléter
-        return "R execution result:\n" + content.substring(0, Math.min(100, content.length()));
+    private String executeRScript(String content) {
+        return "R execution result:\n" + content;
     }
 
-    private String executeSQLScript(String content) throws Exception {
-        // Implémentation réelle à compléter
-        return "SQL execution result:\n" + content.substring(0, Math.min(100, content.length()));
+    private String executeSQLScript(String content) {
+        return "SQL execution result:\n" + content;
     }
 }

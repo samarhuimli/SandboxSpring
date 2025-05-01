@@ -9,13 +9,11 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "execution_results")
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class ExecutionResult {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "BIGSERIAL")
@@ -23,13 +21,16 @@ public class ExecutionResult {
 
     @Lob
     @JdbcTypeCode(SqlTypes.LONGVARCHAR)
-    @Column(name = "output", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String output;
 
     @Lob
     @JdbcTypeCode(SqlTypes.LONGVARCHAR)
-    @Column(name = "error", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String error;
+
+    @Column(name = "execution_time")
+    private String executionTime; // Champ ajouté avec colonne
 
     @CreationTimestamp
     @Column(name = "executed_at", nullable = false, updatable = false,
@@ -42,14 +43,13 @@ public class ExecutionResult {
     private Script script;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20,
+    @Column(nullable = false, length = 20,
             columnDefinition = "VARCHAR(20) CHECK (status IN ('SUCCESS','FAILED','TIMEOUT'))")
     private ExecutionStatus status;
 
     public enum ExecutionStatus {
         SUCCESS, FAILED, TIMEOUT, PENDING
     }
-
 
     public boolean isSuccessful() {
         return ExecutionStatus.SUCCESS.equals(status);
