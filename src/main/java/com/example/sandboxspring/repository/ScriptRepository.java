@@ -8,4 +8,5 @@ import java.util.List;
 public interface ScriptRepository extends JpaRepository<Script, Long> {
     List<Script> findByType(Script.ScriptType type);
     List<Script> findByCreatedBy(String createdBy);
+
 }
